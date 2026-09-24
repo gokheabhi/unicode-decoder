@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Byte Reader — decode text from any encoding</title>
+<title>Byte Toolkit — encode &amp; decode text in any format</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -29,41 +29,48 @@
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.5}
 .wrap{max-width:960px;margin:0 auto;padding:36px 20px 64px}
-header{margin-bottom:28px}
+header{margin-bottom:22px}
 .kicker{font-family:var(--mono);font-size:13px;color:var(--accent);letter-spacing:.02em}
 h1{font-family:var(--mono);font-weight:600;font-size:clamp(26px,4vw,34px);margin:6px 0 10px;letter-spacing:-.01em}
-.sub{color:var(--muted);max-width:62ch;font-size:15px}
+h2{font-family:var(--mono);font-weight:600;font-size:20px;margin:6px 0 8px}
+.sub{color:var(--muted);max-width:64ch;font-size:15px}
+.tabs{display:flex;gap:8px;margin:24px 0 26px;border-bottom:1px solid var(--border)}
+.tab{font-family:var(--mono);font-size:14px;font-weight:600;background:none;border:none;color:var(--muted);
+  padding:10px 4px;margin-right:22px;cursor:pointer;border-bottom:2px solid transparent}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.panel{display:none}
+.panel.active{display:block}
 textarea{
-  width:100%;min-height:120px;background:var(--panel);color:var(--text);
+  width:100%;min-height:100px;background:var(--panel);color:var(--text);
   border:1px solid var(--border);border-radius:6px;padding:14px 16px;
   font-family:var(--mono);font-size:14px;resize:vertical;outline:none;
 }
 textarea:focus{border-color:var(--accent)}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
-select,button{
+select,button,input{
   font-family:var(--sans);font-size:13.5px;background:var(--panel2);color:var(--text);
   border:1px solid var(--border);border-radius:6px;padding:9px 13px;cursor:pointer;
 }
+input{cursor:text}
 button.primary{background:var(--accent);color:#0E1418;border-color:var(--accent);font-weight:600}
-button:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .hint{color:var(--muted);font-size:13px;margin-top:4px}
-.results{margin-top:30px;display:flex;flex-direction:column;gap:12px}
-.card{border:1px solid var(--border);border-radius:8px;background:var(--panel);padding:16px 18px;position:relative}
+.results{margin-top:26px;display:flex;flex-direction:column;gap:12px}
+.card{border:1px solid var(--border);border-radius:8px;background:var(--panel);padding:16px 18px}
 .card.best{border-color:var(--accent)}
 .card-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px;flex-wrap:wrap}
 .enc-name{font-family:var(--mono);font-weight:600;font-size:14px}
-.badge{font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:20px;background:var(--accent);color:#0E1418;font-weight:600}
-.badge.warn{background:var(--panel2);color:var(--muted);border:1px solid var(--border)}
-.score{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.badge{font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:20px;background:var(--panel2);color:var(--muted);border:1px solid var(--border)}
+.badge.best{background:var(--accent);color:#0E1418;border-color:var(--accent)}
 .output{
-  font-family:var(--mono);font-size:14.5px;white-space:pre-wrap;word-break:break-word;
-  background:var(--panel2);border-radius:5px;padding:10px 12px;max-height:180px;overflow:auto;
+  font-family:var(--mono);font-size:14px;white-space:pre-wrap;word-break:break-word;
+  background:var(--panel2);border-radius:5px;padding:10px 12px;max-height:170px;overflow:auto;
   border:1px solid var(--border);
 }
-.output.empty{color:var(--muted);font-style:normal}
+.output.empty{color:var(--muted)}
 .copybtn{font-size:11.5px;padding:5px 10px}
 .empty-state{color:var(--muted);font-family:var(--mono);font-size:13.5px;padding:20px 0}
-footer{margin-top:40px;color:var(--muted);font-size:12.5px;font-family:var(--mono)}
+footer{margin-top:44px;color:var(--muted);font-size:12.5px;font-family:var(--mono)}
 ::-webkit-scrollbar{height:8px;width:8px}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 </style>
@@ -71,66 +78,102 @@ footer{margin-top:40px;color:var(--muted);font-size:12.5px;font-family:var(--mon
 <body>
 <div class="wrap">
   <header>
-    <div class="kicker">// byte reader</div>
-    <h1>Decode raw bytes to text by abhishek</h1>
-    <p class="sub">Paste bytes exactly as stored or dumped from MySQL or PostgreSQL.</p>
+    <div class="kicker">// byte toolkit</div>
+    <h1>Encode &amp; decode text in any format</h1>
+    <p class="sub">Convert between Unicode text and raw bytes under every common database text encoding — UTF-8, UTF-16 LE/BE, UTF-32 LE/BE, UCS-2 LE/BE, Latin-1, and Windows-1252 — the encodings MySQL, PostgreSQL, and other databases store text in. These are character encodings, not encryption: no key is involved and there's nothing secret about them.</p>
   </header>
 
-  <textarea id="input" placeholder="e.g.  e4 b8 ad e6 96 87   /   \u4e2d\u6587   /   0xE4B8AD   /  5Lit5paH (base64)"></textarea>
-  <div class="row">
-    <button class="primary" id="decodeBtn">Decode</button>
-    <button id="sampleBtn">Load example</button>
-    <button id="clearBtn">Clear</button>
-    <span class="hint" id="parseHint"></span>
+  <div class="tabs">
+    <button class="tab active" data-tab="decode">Decode → text</button>
+    <button class="tab" data-tab="encode">Encode → bytes</button>
   </div>
 
-  <div class="results" id="results">
-    <div class="empty-state">Results will appear here, best match first.</div>
+  <!-- ============ DECODE PANEL ============ -->
+  <div class="panel active" id="panel-decode">
+    <p class="sub" style="margin-bottom:16px">Paste bytes exactly as stored or dumped — hex, <code>\x</code>/<code>\u</code> escapes, comma-separated decimals, or base64 — and this tries every encoding and ranks the most likely result.</p>
+    <textarea id="input" placeholder="e.g.  e4 b8 ad e6 96 87   /   \u4e2d\u6587   /   0xE4B8AD   /  5Lit5paH (base64)"></textarea>
+    <div class="row">
+      <button class="primary" id="decodeBtn">Decode</button>
+      <button id="sampleBtnDec">Load example</button>
+      <button id="clearBtnDec">Clear</button>
+      <span class="hint" id="parseHint"></span>
+    </div>
+    <div class="results" id="results">
+      <div class="empty-state">Results will appear here, best match first.</div>
+    </div>
   </div>
 
-  <footer>Everything runs in your browser. Nothing you paste is sent anywhere.</footer>
+  <!-- ============ ENCODE PANEL ============ -->
+  <div class="panel" id="panel-encode">
+    <p class="sub" style="margin-bottom:16px">Type or paste any text and see exactly what bytes it becomes under every encoding — shown as hex, with one-click copy to hex, decimal bytes, or base64.</p>
+    <textarea id="encInput" placeholder="Type text to encode, e.g. 中文 or Café or hello world"></textarea>
+    <div class="row">
+      <button class="primary" id="encodeBtn">Encode</button>
+      <button id="sampleBtnEnc">Load example</button>
+      <button id="clearBtnEnc">Clear</button>
+      <span class="hint" id="encHint"></span>
+    </div>
+    <div class="results" id="encResults">
+      <div class="empty-state">Results will appear here for every encoding.</div>
+    </div>
+  </div>
+
+  <footer>Everything runs in your browser. Nothing you type or paste is sent anywhere.</footer>
 </div>
 
 <script>
 const $ = s => document.querySelector(s);
+function escapeHtml(s){ return s.replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function toHex(bytes){ return Array.from(bytes).map(b=>b.toString(16).padStart(2,'0')).join(' '); }
+function toDec(bytes){ return Array.from(bytes).join(', '); }
+function toBase64(bytes){ let bin=''; bytes.forEach(b=>bin+=String.fromCharCode(b)); return btoa(bin); }
+function copyToClip(text, btn){
+  navigator.clipboard.writeText(text).then(()=>{
+    const old=btn.textContent; btn.textContent='Copied'; setTimeout(()=>btn.textContent=old,1200);
+  }).catch(()=>{});
+}
 
-// ---------- 1. Parse the pasted input into a raw byte array ----------
+// ---------- tabs ----------
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    $('#panel-'+t.dataset.tab).classList.add('active');
+  });
+});
+
+const ENCODINGS = ['UTF-8','UTF-16LE','UTF-16BE','UTF-32LE','UTF-32BE','UCS-2LE','UCS-2BE','Latin-1 (ISO-8859-1)','Windows-1252'];
+const WIN1252_EXTRA = {0x80:'€',0x82:'‚',0x83:'ƒ',0x84:'„',0x85:'…',0x86:'†',0x87:'‡',0x88:'ˆ',0x89:'‰',0x8A:'Š',0x8B:'‹',0x8C:'Œ',0x8E:'Ž',0x91:'\u2018',0x92:'\u2019',0x93:'\u201C',0x94:'\u201D',0x95:'•',0x96:'–',0x97:'—',0x98:'˜',0x99:'™',0x9A:'š',0x9B:'›',0x9C:'œ',0x9E:'ž',0x9F:'Ÿ'};
+const WIN1252_MAP = {'€':0x80,'‚':0x82,'ƒ':0x83,'„':0x84,'…':0x85,'†':0x86,'‡':0x87,'ˆ':0x88,'‰':0x89,'Š':0x8A,'‹':0x8B,'Œ':0x8C,'Ž':0x8E,'\u2018':0x91,'\u2019':0x92,'\u201C':0x93,'\u201D':0x94,'•':0x95,'–':0x96,'—':0x97,'˜':0x98,'™':0x99,'š':0x9A,'›':0x9B,'œ':0x9C,'ž':0x9E,'Ÿ':0x9F};
+
+// ========================================================
+// DECODE
+// ========================================================
 function parseInput(raw){
   const s = raw.trim();
   if(!s) return null;
-
-  // \x41\x42 or \x41 \x42 style
   if(/\\x[0-9a-fA-F]{2}/.test(s)){
     const m = s.match(/\\x([0-9a-fA-F]{2})/g);
     return { bytes: new Uint8Array(m.map(h=>parseInt(h.slice(2),16))), format:'\\x escaped hex bytes' };
   }
-
-  // \u4e2d style (already-decoded code points, given as escapes) -> treat as UTF-16 code units, big-endian pairs
   if(/\\u[0-9a-fA-F]{4}/.test(s)){
     const m = s.match(/\\u([0-9a-fA-F]{4})/g);
     const codeUnits = m.map(h=>parseInt(h.slice(2),16));
     const bytes = new Uint8Array(codeUnits.length*2);
     codeUnits.forEach((cu,i)=>{ bytes[i*2]=cu>>8; bytes[i*2+1]=cu&0xFF; });
-    return { bytes, format:'\\u escaped UTF-16 code units', codeUnits };
+    return { bytes, format:'\\u escaped UTF-16 code units' };
   }
-
-  // comma/space separated decimal byte list e.g. "228, 184, 173" or "228 184 173"
   if(/^[\d,\s]+$/.test(s) && /\d/.test(s)){
     const nums = s.split(/[,\s]+/).filter(Boolean).map(Number);
-    if(nums.every(n=>n>=0 && n<=255)){
-      return { bytes: new Uint8Array(nums), format:'decimal byte list' };
-    }
+    if(nums.every(n=>n>=0 && n<=255)) return { bytes: new Uint8Array(nums), format:'decimal byte list' };
   }
-
-  // hex string, with or without 0x, spaces, or 0x-per-byte
   const hexClean = s.replace(/0x/gi,'').replace(/[\s,:-]/g,'');
   if(/^[0-9a-fA-F]+$/.test(hexClean) && hexClean.length>=2 && hexClean.length%2===0){
     const bytes = new Uint8Array(hexClean.length/2);
     for(let i=0;i<bytes.length;i++) bytes[i]=parseInt(hexClean.substr(i*2,2),16);
     return { bytes, format:'hex string' };
   }
-
-  // base64
   if(/^[A-Za-z0-9+/]+={0,2}$/.test(s) && s.length%4===0 && s.length>=4){
     try{
       const bin = atob(s);
@@ -139,15 +182,10 @@ function parseInput(raw){
       return { bytes, format:'base64' };
     }catch(e){}
   }
-
-  // fallback: treat the literal text as a byte-per-char stream (Latin-1 view of pasted text)
   const bytes = new Uint8Array(s.length);
   for(let i=0;i<s.length;i++) bytes[i]=s.charCodeAt(i) & 0xFF;
   return { bytes, format:'raw pasted characters (byte-per-char)' };
 }
-
-// ---------- 2. Decode the byte array under each candidate encoding ----------
-const WIN1252_EXTRA = {0x80:'€',0x82:'‚',0x83:'ƒ',0x84:'„',0x85:'…',0x86:'†',0x87:'‡',0x88:'ˆ',0x89:'‰',0x8A:'Š',0x8B:'‹',0x8C:'Œ',0x8E:'Ž',0x91:'\u2018',0x92:'\u2019',0x93:'\u201C',0x94:'\u201D',0x95:'•',0x96:'–',0x97:'—',0x98:'˜',0x99:'™',0x9A:'š',0x9B:'›',0x9C:'œ',0x9E:'ž',0x9F:'Ÿ'};
 
 function decodeWith(bytes, label){
   try{
@@ -155,7 +193,7 @@ function decodeWith(bytes, label){
       case 'UTF-8':      return new TextDecoder('utf-8',{fatal:true}).decode(bytes);
       case 'UTF-16LE':   return new TextDecoder('utf-16le',{fatal:true}).decode(bytes);
       case 'UTF-16BE':   return new TextDecoder('utf-16be',{fatal:true}).decode(bytes);
-      case 'UCS-2LE':    return new TextDecoder('utf-16le').decode(bytes); // BMP-only view, same code units
+      case 'UCS-2LE':    return new TextDecoder('utf-16le').decode(bytes);
       case 'UCS-2BE':    return new TextDecoder('utf-16be').decode(bytes);
       case 'UTF-32LE': {
         if(bytes.length%4) throw 0;
@@ -177,17 +215,12 @@ function decodeWith(bytes, label){
         }
         return out;
       }
-      case 'Latin-1 (ISO-8859-1)': {
-        let out=''; for(const b of bytes) out+=String.fromCharCode(b); return out;
-      }
-      case 'Windows-1252': {
-        let out=''; for(const b of bytes) out += WIN1252_EXTRA[b] || String.fromCharCode(b); return out;
-      }
+      case 'Latin-1 (ISO-8859-1)': { let out=''; for(const b of bytes) out+=String.fromCharCode(b); return out; }
+      case 'Windows-1252': { let out=''; for(const b of bytes) out += WIN1252_EXTRA[b] || String.fromCharCode(b); return out; }
     }
   }catch(e){ return null; }
 }
 
-// ---------- 3. Score plausibility of a decoded string ----------
 function score(str){
   if(str===null || str==='') return -1;
   let printable=0, control=0, replacement=0, total=str.length;
@@ -198,61 +231,132 @@ function score(str){
     else if(cp<32) control++;
     else printable++;
   }
-  let s = (printable/total)*100 - (replacement/total)*300 - (control/total)*150;
-  return s;
+  return (printable/total)*100 - (replacement/total)*300 - (control/total)*150;
 }
 
-const ENCODINGS = ['UTF-8','UTF-16LE','UTF-16BE','UTF-32LE','UTF-32BE','UCS-2LE','UCS-2BE','Latin-1 (ISO-8859-1)','Windows-1252'];
-
-function render(){
+function renderDecode(){
   const raw = $('#input').value;
   const parsed = parseInput(raw);
   const results = $('#results');
   const hint = $('#parseHint');
   results.innerHTML='';
-
   if(!parsed){ results.innerHTML = '<div class="empty-state">Paste some bytes above, then click Decode.</div>'; hint.textContent=''; return; }
-
   hint.textContent = `Parsed as: ${parsed.format} — ${parsed.bytes.length} byte${parsed.bytes.length===1?'':'s'}`;
 
-  const scored = ENCODINGS.map(enc=>{
-    const text = decodeWith(parsed.bytes, enc);
-    return { enc, text, sc: score(text) };
-  }).sort((a,b)=>b.sc-a.sc);
+  const scored = ENCODINGS.map(enc=>({ enc, text: decodeWith(parsed.bytes, enc), sc: score(decodeWith(parsed.bytes, enc)) }))
+    .sort((a,b)=>b.sc-a.sc);
 
   scored.forEach((r,i)=>{
-    const card = document.createElement('div');
-    card.className = 'card' + (i===0 && r.text ? ' best' : '');
     const hasText = r.text!==null && r.text!=='';
+    const card = document.createElement('div');
+    card.className = 'card' + (i===0 && hasText ? ' best' : '');
     card.innerHTML = `
       <div class="card-head">
         <span class="enc-name">${r.enc}</span>
-        ${i===0 && hasText ? '<span class="badge">best match</span>' : (hasText ? '<span class="badge warn">also valid</span>' : '<span class="badge warn">invalid</span>')}
+        ${i===0 && hasText ? '<span class="badge best">best match</span>' : (hasText ? '<span class="badge">also valid</span>' : '<span class="badge">invalid</span>')}
       </div>
       <div class="output ${hasText?'':'empty'}">${hasText ? escapeHtml(r.text) : '— not decodable under this encoding —'}</div>
-      ${hasText ? `<div class="row" style="margin-top:8px"><button class="copybtn" data-copy="${i}">Copy text</button><span class="score">score ${r.sc.toFixed(0)}</span></div>` : ''}
+      ${hasText ? `<div class="row" style="margin-top:8px"><button class="copybtn" data-copy="${i}">Copy text</button><span class="hint">score ${r.sc.toFixed(0)}</span></div>` : ''}
     `;
     results.appendChild(card);
   });
-
   results.querySelectorAll('[data-copy]').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       const idx = +btn.dataset.copy;
-      navigator.clipboard.writeText(scored[idx].text).then(()=>{
-        const old=btn.textContent; btn.textContent='Copied'; setTimeout(()=>btn.textContent=old,1200);
-      }).catch(()=>{});
+      copyToClip(scored[idx].text, btn);
     });
   });
 }
 
-function escapeHtml(s){
-  return s.replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+$('#decodeBtn').addEventListener('click', renderDecode);
+$('#input').addEventListener('keydown', e=>{ if(e.key==='Enter' && (e.metaKey||e.ctrlKey)) renderDecode(); });
+$('#clearBtnDec').addEventListener('click', ()=>{ $('#input').value=''; $('#parseHint').textContent=''; $('#results').innerHTML='<div class="empty-state">Results will appear here, best match first.</div>'; });
+$('#sampleBtnDec').addEventListener('click', ()=>{ $('#input').value='e4 b8 ad e6 96 87 20 e2 9c 93'; renderDecode(); });
+function encodeWith(str, label){
+  switch(label){
+    case 'UTF-8': return new TextEncoder().encode(str);
+    case 'UTF-16LE': {
+      const bytes=new Uint8Array(str.length*2);
+      for(let i=0;i<str.length;i++){ const cu=str.charCodeAt(i); bytes[i*2]=cu&0xFF; bytes[i*2+1]=cu>>8; }
+      return bytes;
+    }
+    case 'UTF-16BE': {
+      const bytes=new Uint8Array(str.length*2);
+      for(let i=0;i<str.length;i++){ const cu=str.charCodeAt(i); bytes[i*2]=cu>>8; bytes[i*2+1]=cu&0xFF; }
+      return bytes;
+    }
+    case 'UCS-2LE': return encodeWith(str,'UTF-16LE');
+    case 'UCS-2BE': return encodeWith(str,'UTF-16BE');
+    case 'UTF-32LE': {
+      const cps=Array.from(str);
+      const bytes=new Uint8Array(cps.length*4);
+      cps.forEach((ch,i)=>{ const cp=ch.codePointAt(0);
+        bytes[i*4]=cp&0xFF; bytes[i*4+1]=(cp>>8)&0xFF; bytes[i*4+2]=(cp>>16)&0xFF; bytes[i*4+3]=(cp>>24)&0xFF; });
+      return bytes;
+    }
+    case 'UTF-32BE': {
+      const cps=Array.from(str);
+      const bytes=new Uint8Array(cps.length*4);
+      cps.forEach((ch,i)=>{ const cp=ch.codePointAt(0);
+        bytes[i*4]=(cp>>24)&0xFF; bytes[i*4+1]=(cp>>16)&0xFF; bytes[i*4+2]=(cp>>8)&0xFF; bytes[i*4+3]=cp&0xFF; });
+      return bytes;
+    }
+    case 'Latin-1 (ISO-8859-1)': {
+      const bytes=new Uint8Array(str.length); let lossy=false;
+      for(let i=0;i<str.length;i++){ const cp=str.charCodeAt(i); if(cp>255) lossy=true; bytes[i]=cp&0xFF; }
+      return {bytes, lossy};
+    }
+    case 'Windows-1252': {
+      const bytes=new Uint8Array(str.length); let lossy=false;
+      for(let i=0;i<str.length;i++){ const ch=str[i]; const cp=str.charCodeAt(i);
+        if(WIN1252_MAP[ch]!==undefined) bytes[i]=WIN1252_MAP[ch];
+        else if(cp<=255) bytes[i]=cp;
+        else { bytes[i]=0x3F; lossy=true; }
+      }
+      return {bytes, lossy};
+    }
+  }
 }
 
-$('#decodeBtn').addEventListener('click', render);
-$('#input').addEventListener('keydown', e=>{ if(e.key==='Enter' && (e.metaKey||e.ctrlKey)) render(); });
-$('#clearBtn').addEventListener('click', ()=>{ $('#input').value=''; $('#parseHint').textContent=''; $('#results').innerHTML='<div class="empty-state">Results will appear here, best match first.</div>'; });
-$('#sampleBtn').addEventListener('click', ()=>{ $('#input').value='e4 b8 ad e6 96 87 20 e2 9c 93'; render(); });
+function renderEncode(){
+  const str = $('#encInput').value;
+  const results = $('#encResults');
+  results.innerHTML = '';
+  if(!str){ results.innerHTML = '<div class="empty-state">Type some text above, then click Encode.</div>'; $('#encHint').textContent=''; return; }
+  $('#encHint').textContent = `${Array.from(str).length} character${Array.from(str).length===1?'':'s'}`;
+
+  ENCODINGS.forEach(enc=>{
+    let bytes, lossy=false;
+    const r = encodeWith(str, enc);
+    if(r instanceof Uint8Array) bytes = r; else { bytes = r.bytes; lossy = r.lossy; }
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-head">
+        <span class="enc-name">${enc}</span>
+        <span class="badge">${bytes.length} bytes${lossy?' — lossy, some characters can\'t be represented':''}</span>
+      </div>
+      <div class="output">${escapeHtml(toHex(bytes))}</div>
+      <div class="row" style="margin-top:8px">
+        <button class="copybtn" data-copy-hex>Copy hex</button>
+        <button class="copybtn" data-copy-dec>Copy decimal bytes</button>
+        <button class="copybtn" data-copy-b64>Copy base64</button>
+      </div>
+    `;
+    card.querySelector('[data-copy-hex]').addEventListener('click', e=>copyToClip(toHex(bytes).replace(/\s/g,''), e.target));
+    card.querySelector('[data-copy-dec]').addEventListener('click', e=>copyToClip(toDec(bytes), e.target));
+    card.querySelector('[data-copy-b64]').addEventListener('click', e=>copyToClip(toBase64(bytes), e.target));
+    results.appendChild(card);
+  });
+}
+
+$('#encodeBtn').addEventListener('click', renderEncode);
+$('#encInput').addEventListener('keydown', e=>{ if(e.key==='Enter' && (e.metaKey||e.ctrlKey)) renderEncode(); });
+$('#clearBtnEnc').addEventListener('click', ()=>{ $('#encInput').value=''; $('#encHint').textContent=''; $('#encResults').innerHTML='<div class="empty-state">Results will appear here for every encoding.</div>'; });
+$('#sampleBtnEnc').addEventListener('click', ()=>{ $('#encInput').value='中文 ✓ Café'; renderEncode(); });
+
+
+
 </script>
 </body>
 </html>
